@@ -2,7 +2,6 @@ package assignment2.griffith.hari.assignment2;
 
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
@@ -10,9 +9,6 @@ import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.TextView;
-
-import java.util.ArrayList;
 
 /**
  * Created by aahuyarakshakaharil on 09/11/17.
@@ -20,8 +16,11 @@ import java.util.ArrayList;
 
 public class MinesweeperView extends View {
 
-    private Paint black, white, silver, red; //Colors for background and line colors.
+    private Paint black, white, silver, red, yellow; //Colors for background and line colors.
     private Paint[] textPaints; // For coloring texts, index indicate color position.
+    private IOnMineCountChangeEventListener iOnMineCountChangeEventListener;
+    private int minesMarkedCount;
+    private float multiplier;
 
 
     public boolean isUncoverModeSet() {
@@ -34,9 +33,21 @@ public class MinesweeperView extends View {
 
     private boolean uncoverModeSet = true; // Default to uncover Mode
 
-    private TextView minesLeftTextView ;
-    private int minesMarkedCount;
-    private float multiplier;
+
+    public int getMinesMarkedCount() {
+        return minesMarkedCount;
+    }
+
+    public void setMinesMarkedCount(int minesMarkedCount) {
+
+        IOnMineCountChangeEventListener iOnMineCountChangeEventListener = this.iOnMineCountChangeEventListener;
+        this.minesMarkedCount = minesMarkedCount;
+        iOnMineCountChangeEventListener.onMinesMarkedCountChange(minesMarkedCount);
+
+
+    }
+
+
 
     public void setCellObjectTable(CellObject[][] cellObjectTable) {
         this.cellObjectTable = cellObjectTable;
@@ -47,7 +58,7 @@ public class MinesweeperView extends View {
 
     public MinesweeperView(Context context) {
         super(context);
-        init(context,null);
+        init(null);
     }
 
 
@@ -55,16 +66,16 @@ public class MinesweeperView extends View {
 
     public MinesweeperView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
-        init(context,attrs);
+        init(attrs);
     }
 
     public MinesweeperView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        init(context,attrs);
+        init(attrs);
     }
 
 
-    private void init(Context context, @Nullable AttributeSet attrs) { //Common init method.
+    private void init( @Nullable AttributeSet attrs) { //Common init method.
         black = new Paint();
         black.setColor(getResources().getColor(R.color.black));
         white = new Paint();
@@ -73,6 +84,8 @@ public class MinesweeperView extends View {
         silver.setColor(getResources().getColor(R.color.silver));
         red = new Paint();
         red.setColor(getResources().getColor(R.color.red));
+        yellow = new Paint();
+        yellow.setColor(getResources().getColor(R.color.yellow));
         textPaints = new Paint[10];
 
         for(int index = 0; index<textPaints.length-1;index++)
@@ -91,7 +104,7 @@ public class MinesweeperView extends View {
         textPaints[4].setColor(getResources().getColor(R.color.yellow));// Text 3 should be Yellow.
         white.setAntiAlias(true);
 
-        minesLeftTextView = (TextView) findViewById(R.id.number_of_mines_marked);
+        //minesLeftTextView = (TextView) findViewById(R.id.number_of_mines_marked);
 
     }
 
@@ -102,7 +115,7 @@ public class MinesweeperView extends View {
         float height = getMeasuredHeight();
         if(height<width)
             width = height;
-        multiplier = width/11;
+        multiplier = width/10;
         drawInitialSquares(multiplier,canvas);
         drawTextOnSquares(multiplier,canvas);
     }
@@ -156,14 +169,17 @@ public class MinesweeperView extends View {
 
     private void drawInitialSquares(float multiplier, Canvas canvas) {
 
-        for(int i =0;i<=10;i++) {
-            canvas.drawLine(2,i*multiplier,10*multiplier,i*multiplier,white); // Horizontal Lines
-            canvas.drawLine(i*multiplier,2,i*multiplier,10*multiplier,white); // Vertical Lines
+        for(int index =0;index<=10;index++) {
+            canvas.drawLine(2,index*multiplier,10*multiplier,index*multiplier,white); // Horizontal Lines
+            canvas.drawLine(index*multiplier,2,index*multiplier,10*multiplier,white); // Vertical Lines
         }
-        for(int i=0; i<10;i++)
+        for(int row=0; row<10;row++)
         {
-            for(int j=0 ; j<10; j++){
-                canvas.drawRect(i*multiplier+2f,j*multiplier+2f,(i+1)*multiplier-2f,(j+1)*multiplier-2f,black); //Render Rectangles
+            for(int col=0 ; col<10; col++){
+                if(!cellObjectTable[row][col].isFlagged())
+                    canvas.drawRect(row*multiplier+2f,col*multiplier+2f,(row+1)*multiplier-2f,(col+1)*multiplier-2f,black); //Render Rectangles
+                else
+                    canvas.drawRect(row*multiplier+2f,col*multiplier+2f,(row+1)*multiplier-2f,(col+1)*multiplier-2f,yellow);
             }
         }
 
@@ -190,15 +206,36 @@ public class MinesweeperView extends View {
         int col = (int) (y/multiplier);
         System.out.println("Data is x "+x+" and y is "+y);
         System.out.println("Data is x "+row+" and y is "+col);
-        cellObjectTable[row][col].setCovered(false);
 
-        if(isUncoverModeSet()){// Check Mode
-
+        if(!isUncoverModeSet()){// Check Mode
+            if(cellObjectTable[row][col].isCovered())
+            {
+                if(cellObjectTable[row][col].isFlagged()){
+                    cellObjectTable[row][col].setFlagged(false);
+                    setMinesMarkedCount(getMinesMarkedCount()-1);
+                }
+                else{
+                    cellObjectTable[row][col].setFlagged(true);
+                    setMinesMarkedCount(getMinesMarkedCount()+1);
+                }
+            }
+        }
+        else{
+            if(!cellObjectTable[row][col].isFlagged())
+                cellObjectTable[row][col].setCovered(false);
         }
         // Check if flagged.
         // Check if its Mine
         invalidate();
         return super.onTouchEvent(event);
 
+    }
+
+    public interface IOnMineCountChangeEventListener {
+        void onMinesMarkedCountChange(int count);
+    }
+
+    public void setIOnMineCountChangeEventListener(IOnMineCountChangeEventListener iOnMineCountChangeEventListener){
+        this.iOnMineCountChangeEventListener = iOnMineCountChangeEventListener;
     }
 }

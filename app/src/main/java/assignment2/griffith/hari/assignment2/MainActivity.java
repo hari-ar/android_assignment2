@@ -4,10 +4,12 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 
 import java.util.HashMap;
 import java.util.Random;
 
+import static java.util.Collections.min;
 import static java.util.Collections.shuffle;
 
 public class MainActivity extends AppCompatActivity {
@@ -15,6 +17,7 @@ public class MainActivity extends AppCompatActivity {
     CellObject[][] cellObjectTable;
     MinesweeperView minesweeperView;
     Button modeButton;
+    TextView minesMarked;
     Button reset;
 
     @Override
@@ -23,8 +26,16 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         minesweeperView = (MinesweeperView) findViewById(R.id.minesweeper_view_object);
         modeButton = (Button) findViewById(R.id.mode_button);
+        minesMarked = (TextView) findViewById(R.id.number_of_mines_marked);
         init(minesweeperView);
         minesweeperView.setCellObjectTable(cellObjectTable);
+
+        minesweeperView.setIOnMineCountChangeEventListener(new MinesweeperView.IOnMineCountChangeEventListener() {
+            @Override
+            public void onMinesMarkedCountChange(int count) {
+                minesMarked.setText("Marked Mines : "+count);
+            }
+        });
 
     }
 
