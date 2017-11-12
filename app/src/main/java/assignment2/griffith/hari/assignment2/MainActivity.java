@@ -92,7 +92,8 @@ public class MainActivity extends AppCompatActivity {
             int col = random.nextInt(10);
             if(!cellObjectTable[row][col].isMine()){
                 cellObjectTable[row][col].setMine(true);
-                //cellObjectTable[row][col].setCovered(false);
+                //cellObjectTable[row][col].setCovered(false);Enabled for testing
+                System.out.println("Row is "+row+" and Col is "+col);
                 count++;
             }
         }
@@ -114,6 +115,12 @@ public class MainActivity extends AppCompatActivity {
     public void resetGame(View view) {
         init(minesweeperView);
         minesweeperView.setCellObjectTable(cellObjectTable);
+        minesweeperView.setGameOverFlag(false);
+        minesweeperView.setMinesMarkedCount(0);
+        minesweeperView.setUnCoveredCount(0);
+        minesweeperView.setUncoverModeSet(false); // To start with unCoverMode
+        changeMode(view);// To start with unCoverMode
         minesweeperView.invalidate();
+
     }
 }

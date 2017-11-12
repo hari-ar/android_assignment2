@@ -9,6 +9,7 @@ import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Toast;
 
 /**
  * Created by aahuyarakshakaharil on 09/11/17.
@@ -20,7 +21,27 @@ public class MinesweeperView extends View {
     private Paint[] textPaints; // For coloring texts, index indicate color position.
     private IOnMineCountChangeEventListener iOnMineCountChangeEventListener;
     private int minesMarkedCount;
+    private int unCoveredCount=0;
     private float multiplier;
+    private boolean uncoverModeSet = true; // Default to uncover Mode
+
+
+    public int getUnCoveredCount() {
+        return unCoveredCount;
+    }
+
+    public void setUnCoveredCount(int unCoveredCount) {
+        this.unCoveredCount = unCoveredCount;
+    }
+    public boolean isGameOverFlag() {
+        return gameOverFlag;
+    }
+
+    public void setGameOverFlag(boolean gameOverFlag) {
+        this.gameOverFlag = gameOverFlag;
+    }
+
+    private boolean gameOverFlag = false;
 
 
     public boolean isUncoverModeSet() {
@@ -31,7 +52,7 @@ public class MinesweeperView extends View {
         this.uncoverModeSet = uncoverModeSet;
     }
 
-    private boolean uncoverModeSet = true; // Default to uncover Mode
+
 
 
     public int getMinesMarkedCount() {
@@ -116,8 +137,15 @@ public class MinesweeperView extends View {
         if(height<width)
             width = height;
         multiplier = width/10;
+        System.out.println(getUnCoveredCount());
         drawInitialSquares(multiplier,canvas);
         drawTextOnSquares(multiplier,canvas);
+        if(getUnCoveredCount()>=80)
+        {
+            Toast.makeText(getContext(),"Awesome..!!! You Win.. Click on Reset to try again", Toast.LENGTH_LONG).show();
+            unCoverAllMines();
+        }
+
     }
 
     private void drawTextOnSquares(float multiplier, Canvas canvas) {
@@ -176,10 +204,30 @@ public class MinesweeperView extends View {
         for(int row=0; row<10;row++)
         {
             for(int col=0 ; col<10; col++){
+
                 if(!cellObjectTable[row][col].isFlagged())
                     canvas.drawRect(row*multiplier+2f,col*multiplier+2f,(row+1)*multiplier-2f,(col+1)*multiplier-2f,black); //Render Rectangles
                 else
                     canvas.drawRect(row*multiplier+2f,col*multiplier+2f,(row+1)*multiplier-2f,(col+1)*multiplier-2f,yellow);
+                if(isGameOverFlag()){
+                    //canvas.drawRect(row*multiplier+2f,col*multiplier+2f,(row+1)*multiplier-2f,(col+1)*multiplier-2f,black); //Render Everything
+                    unCoverAllMines();
+                }
+            }
+
+        }
+    }
+
+
+
+    private void unCoverAllMines() {
+        for(int row=0; row<10;row++)
+        {
+            for(int col=0 ; col<10; col++){
+                if(cellObjectTable[row][col].isMine()){
+                    cellObjectTable[row][col].setFlagged(false);
+                    cellObjectTable[row][col].setCovered(false);
+                }
             }
         }
 
@@ -207,28 +255,80 @@ public class MinesweeperView extends View {
         System.out.println("Data is x "+x+" and y is "+y);
         System.out.println("Data is x "+row+" and y is "+col);
 
-        if(!isUncoverModeSet()){// Check Mode
-            if(cellObjectTable[row][col].isCovered())
-            {
-                if(cellObjectTable[row][col].isFlagged()){
-                    cellObjectTable[row][col].setFlagged(false);
-                    setMinesMarkedCount(getMinesMarkedCount()-1);
+        if(!isGameOverFlag()) //Invalidate all clicks after game over
+        {
+            if( !isUncoverModeSet()){// Check Mode
+                if(cellObjectTable[row][col].isCovered())
+                {
+                    if(cellObjectTable[row][col].isFlagged()){
+                        cellObjectTable[row][col].setFlagged(false);
+                        setMinesMarkedCount(getMinesMarkedCount()-1);
+                    }
+                    else{
+                        cellObjectTable[row][col].setFlagged(true);
+                        setMinesMarkedCount(getMinesMarkedCount()+1);
+                    }
                 }
-                else{
-                    cellObjectTable[row][col].setFlagged(true);
-                    setMinesMarkedCount(getMinesMarkedCount()+1);
+            }
+            else
+            {
+                if(!cellObjectTable[row][col].isFlagged())  // Check if flagged.
+                {
+                    if(!cellObjectTable[row][col].isMine())
+                    {
+                        if(cellObjectTable[row][col].getMineCount()==0)
+                            uncoverCells(row , col);
+                        else
+                        {
+                            cellObjectTable[row][col].setCovered(false);
+                            setUnCoveredCount(getUnCoveredCount()+1);
+                        }
+                    }
+                    else
+                    { //If User Clicked on Mine
+                        setGameOverFlag(true);//Sets game is over..!!
+                        Toast.makeText(getContext(),"OOPS..!! Better Luck Next Time..!!! Click Rest for new game..", Toast.LENGTH_LONG).show();
+                        //Uncover Mines
+                    }
                 }
             }
         }
-        else{
-            if(!cellObjectTable[row][col].isFlagged())
-                cellObjectTable[row][col].setCovered(false);
-        }
-        // Check if flagged.
-        // Check if its Mine
+
         invalidate();
         return super.onTouchEvent(event);
 
+    }
+
+    private void uncoverCells(int row, int col) {
+        for(int i = -1; i < 2; i++) //Horizontal Neighbours
+        {
+            for(int j = -1; j < 2; j++) //Vertical Neighbors
+            {
+                if(row+i < 0 || row+i >= 10 || col+j < 0 || col+j >= 10) // Checking corner case for IndexOutOfBounds
+                {
+                    continue;
+                }
+                if(cellObjectTable[row+i][col+j].isCovered()){
+
+                    //System.out.println("Rows is "+row+" col is "+col);
+                        if(cellObjectTable[row+i][col+j].isFlagged()){
+                            cellObjectTable[row+i][col+j].setFlagged(false);
+                            minesMarkedCount--;
+                        }
+
+                        cellObjectTable[row+i][col+j].setCovered(false);
+                        setUnCoveredCount(getUnCoveredCount()+1);
+
+                        if(cellObjectTable[row+i][col+j].getMineCount()==0){
+                            uncoverCells(row+i,col+j);
+
+                        }
+
+                    }
+
+
+            }
+        }
     }
 
     public interface IOnMineCountChangeEventListener {
