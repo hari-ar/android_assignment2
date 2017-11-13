@@ -86,12 +86,12 @@ public class MinesweeperView extends View {
         }
         drawInitialSquares(); // Draw Background
         drawTextSquares(); //This method is responsible for drawing Texts
-        if (getUnCoveredCount() == 40) //Half way there.. If 40 squares are opened., player wins..!!
+        if ((!gameOverFlag) && getUnCoveredCount() == 40) //Half way there.. If 40 squares are opened., player wins..!! Check for game over flag.
         {
             Toast.makeText(getContext(), "Great..!!! You're Half way there..!! Keep rocking..", Toast.LENGTH_LONG).show();//Toast showing game ended
             unCoverAllMines(); //Uncover mines to show winner all mines..
         }
-        if (getUnCoveredCount() >= 80) //If 80 squares are opened., player wins..!!
+        if (getUnCoveredCount() >= 80) //If 80 squares are opened., player wins..!! C.
         {
             Toast.makeText(getContext(), "Awesome..!!! You Win.. Click on Reset to try again", Toast.LENGTH_LONG).show();//Toast showing game ended
             unCoverAllMines(); //Uncover mines to show winner all mines..
