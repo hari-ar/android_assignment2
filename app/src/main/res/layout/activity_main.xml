@@ -36,7 +36,7 @@
     <assignment2.griffith.hari.assignment2.MinesweeperView
         android:id="@+id/minesweeper_view_object"
         android:layout_width="match_parent"
-        android:layout_height="507dp"
+        android:layout_height="match_parent"
         android:layout_gravity="center"
         android:padding="25dp" />
 
