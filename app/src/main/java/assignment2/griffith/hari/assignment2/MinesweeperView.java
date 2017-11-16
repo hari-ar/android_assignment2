@@ -3,8 +3,6 @@ package assignment2.griffith.hari.assignment2;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.graphics.Rect;
-import android.graphics.RectF;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
@@ -27,6 +25,7 @@ public class MinesweeperView extends View {
     private boolean uncoverModeSet = true; // Default to uncover Mode
     private boolean gameOverFlag = false;
     private Canvas canvas;
+    int rowDown =-1, columnDown =-1, rowUp =-1,columnUp =-1;
 
 
     //Constructors Block Start..!!!
@@ -86,17 +85,21 @@ public class MinesweeperView extends View {
         }
         drawInitialSquares(); // Draw Background
         drawTextSquares(); //This method is responsible for drawing Texts
-        if ((!gameOverFlag) && getUnCoveredCount() == 40) //Half way there.. If 40 squares are opened., player wins..!! Check for game over flag.
-        {
-            Toast.makeText(getContext(), "Great..!!! You're Half way there..!! Keep rocking..", Toast.LENGTH_LONG).show();//Toast showing game ended
-            unCoverAllMines(); //Uncover mines to show winner all mines..
-        }
-        if (getUnCoveredCount() >= 80) //If 80 squares are opened., player wins..!! C.
-        {
-            Toast.makeText(getContext(), "Awesome..!!! You Win.. Click on Reset to try again", Toast.LENGTH_LONG).show();//Toast showing game ended
-            unCoverAllMines(); //Uncover mines to show winner all mines..
+        if(!gameOverFlag) {
+            if (getUnCoveredCount() == 40) //Half way there.. If 40 squares are opened., player is half way there..!! Check for game over flag.
+            {
+                Toast.makeText(getContext(), "Great..!!! You're Half way there..!! Keep rocking..", Toast.LENGTH_LONG).show();//Toast showing game ended
+            }
+            if (getUnCoveredCount() == 80) //If 80 squares are opened., player wins..!!
+            {
+                gameOverFlag = true;
+                Toast.makeText(getContext(), "Awesome..!!! You Win.. Click on Reset to try again", Toast.LENGTH_LONG).show();//Toast showing game ended
+                //openAllSquares();
+                invalidate();
+            }
         }
     }
+
 
     private void drawInitialSquares() {
         for (int index = 0; index <= 10; index++) {
@@ -109,9 +112,6 @@ public class MinesweeperView extends View {
                     canvas.drawRect(row * multiplier + paddingConstant, col * multiplier + paddingConstant, (row + 1) * multiplier - paddingConstant, (col + 1) * multiplier - paddingConstant, black); //Render Rectangles
                 else
                     canvas.drawRect(row * multiplier + paddingConstant, col * multiplier + paddingConstant, (row + 1) * multiplier - paddingConstant, (col + 1) * multiplier - paddingConstant, yellow); // Yellow Rectangles for flagged
-                if (isGameOverFlag()) {
-                    unCoverAllMines();  //Display Users All Mines..!!
-                }
             }
 
         }
@@ -161,6 +161,9 @@ public class MinesweeperView extends View {
     }
 
 
+
+
+
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
@@ -179,43 +182,62 @@ public class MinesweeperView extends View {
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         //Get user touch input co-ordinates
-        float x = event.getX();
-        float y = event.getY();
-        //Convert user touch co-ordinates to out cell map
-        int row = (int) (x / multiplier);
-        int column = (int) (y / multiplier);
 
-        if (!isGameOverFlag()) //Invalidate all clicks after game over
-        {
-            if (!isUncoverModeSet()) {// Check Mode Goes, inside loop if
-                if (cellObjectTable[row][column].isCovered()) { //Checking if cell is covered
-                    if (cellObjectTable[row][column].isFlagged()) { //Checking if cell is flagged, unflag if flagged and vice versa
-                        cellObjectTable[row][column].setFlagged(false); //Unset Flag and reduce Marked count
-                        setMinesMarkedCount(getMinesMarkedCount() - 1); //Reduce marked count
-                    } else { //This will be called in marking mode if flag was not set already
-                        cellObjectTable[row][column].setFlagged(true); //Set Flag
-                        setMinesMarkedCount(getMinesMarkedCount() + 1); //Increase marking count
-                    }
-                }
-            } else {
-                if (!cellObjectTable[row][column].isFlagged())  // Check if flagged.
+        if(event.getActionMasked() == MotionEvent.ACTION_DOWN) { //Get touch down co-ordinates
+
+            float x = event.getX();
+            float y = event.getY();
+            //Convert user touch co-ordinates to out cell map
+             rowDown = (int) (x / multiplier);
+            columnDown = (int) (y / multiplier);
+            return true;
+        }
+
+        if(event.getActionMasked() == MotionEvent.ACTION_UP) {//Get touch up co-ordinates
+            float x = event.getX();
+            float y = event.getY();
+            //Convert user touch co-ordinates to out cell map
+             rowUp = (int) (x / multiplier);
+            columnUp = (int) (y / multiplier);
+        }
+
+        if(rowDown == rowUp && columnDown == columnUp){ //Ignore Swipes by checking if touch down and touch up are same cells..!!
+            int row = rowUp; int column = columnUp;
+            rowDown = -1;columnDown = -1; columnUp = -1; columnDown = -1; //Reset to not get false values
+            if (!isGameOverFlag()) //Invalidate all clicks after game over
+            {
+                if (!isUncoverModeSet()) // Check Mode..!!
                 {
-                    if (!cellObjectTable[row][column].isMine()) { //Check if user stepped on mine..!! Oops
-                        if (cellObjectTable[row][column].getMineCount() == 0) //If not mine check for count., if zero, we've to appreciate user
-                            uncoverCells(row, column); // Appreciating by opening adjacent 0 tiles, till it reach a non zero tile
-                        else {
-                            cellObjectTable[row][column].setCovered(false); //If not mine, uncover the cell
-                            setUnCoveredCount(getUnCoveredCount() + 1); //Increase the uncovered count to track the game progress
+                    if (cellObjectTable[row][column].isCovered()) { //Checking if cell is covered
+                        if (cellObjectTable[row][column].isFlagged()) { //Checking if cell is flagged, unflag if flagged and vice versa
+                            cellObjectTable[row][column].setFlagged(false); //Unset Flag and reduce Marked count
+                            setMinesMarkedCount(getMinesMarkedCount() - 1); //Reduce marked count
+                        } else { //This will be called in marking mode if flag was not set already
+                            cellObjectTable[row][column].setFlagged(true); //Set Flag
+                            setMinesMarkedCount(getMinesMarkedCount() + 1); //Increase marking count
                         }
-                    } else { //If User Clicked on Mine
-                        setGameOverFlag(true);//Sets game is over..!!
-                        Toast.makeText(getContext(), "OOPS..!! Better Luck Next Time..!!! Click Reset for new game..", Toast.LENGTH_SHORT).show();
-                        //Uncover Mines
+                    }
+                } else { // Uncover Mode
+                    if (!cellObjectTable[row][column].isFlagged() && cellObjectTable[row][column].isCovered() )  // Check if flagged. and if uncovered.. without that will increment counter if clicked on uncovered cell..!!
+                    {
+                        if (!cellObjectTable[row][column].isMine()) { //Check if user stepped on mine..!! Oops
+                            if (cellObjectTable[row][column].getMineCount() == 0) //If not mine check for count., if zero, we've to appreciate user
+                                uncoverCells(row, column); // Appreciating by opening adjacent 0 tiles, till it reach a non zero tile
+                            else {
+                                cellObjectTable[row][column].setCovered(false); //If not mine, uncover the cell
+                                setUnCoveredCount(getUnCoveredCount() + 1); //Increase the uncovered count to track the game progress
+                            }
+                        } else { //If User Clicked on Mine
+                            setGameOverFlag(true);//Sets game is over..!!
+                            unCoverAllMines();
+                            Toast.makeText(getContext(), "OOPS..!! Better Luck Next Time..!!! Click Reset for new game..", Toast.LENGTH_SHORT).show();
+                            //Uncover Mines
+                        }
                     }
                 }
+                invalidate(); //Calls onDraw Again forcefully... Why Android not do this automatically...?????
             }
         }
-        invalidate(); //Calls onDraw Again forcefully... Why Android not do this automatically...?????
         return super.onTouchEvent(event);
     }
 

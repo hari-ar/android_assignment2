@@ -3,8 +3,6 @@ package assignment2.griffith.hari.assignment2;
 import android.content.Context;
 import android.graphics.Paint;
 import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -26,9 +24,9 @@ public class MainActivity extends AppCompatActivity {
     Button modeButton;
     TextView minesMarked;
     private Paint[] textPaints; // For coloring texts, index indicate color position.
-    private SensorManager mSensorManager;
-    private Sensor mAccelerometer;
-    private ShakeListener mShakeDetector;
+    private SensorManager sensorManager;
+    private Sensor sensor;
+    private ShakeListener shakeListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,23 +51,19 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        mShakeDetector = new ShakeListener();
-        mShakeDetector.setOnShakeListener(new ShakeListener.OnShakeListener() {
+        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        sensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        shakeListener = new ShakeListener();
+        shakeListener.setOnShakeListener(new ShakeListener.OnShakeListener() {
 
             @Override
             public void onShake() {
-                Toast.makeText(MainActivity.this, "Device Shaken, Reset", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "Device Shaken, Resetting the Game", Toast.LENGTH_SHORT).show();
                 reset();
             }
         });
 
     }
-
-
-
-
 
 
     //Initialize game board with given size
@@ -150,12 +144,12 @@ public class MainActivity extends AppCompatActivity {
         Random random = new Random(); //For random number generation
         int count = 0; // To keep track of number of mines..
         while (count < 20) { // Mines have to be 20..!! Else fail in assignment..!!
-            int row = random.nextInt(10); //Bound by 10 , max number will 10
-            int col = random.nextInt(10); //Bound by 10 , max number will 10
+            int row = random.nextInt(10); //Bound by 10 , max number is 10
+            int col = random.nextInt(10); //Bound by 10 , max number  is 10
             if (!cellObjectTable[row][col].isMine()) {
-                cellObjectTable[row][col].setMine(true);
-                //cellObjectTable[row][col].setCovered(false);Enabled for testing
-                System.out.println("Row is " + row + " and Col is " + col);
+                cellObjectTable[row][col].setMine(true); //Power up Mines
+                //cellObjectTable[row][col].setFlagged(true);//Enabled for testing
+                //System.out.println("Row is " + row + " and Col is " + col);
                 count++;
             }
         }
@@ -196,13 +190,13 @@ public class MainActivity extends AppCompatActivity {
     public void onResume() {
         super.onResume();
         // Add the following line to register the Session Manager Listener onResume
-        mSensorManager.registerListener(mShakeDetector, mAccelerometer,	SensorManager.SENSOR_DELAY_UI);
+        sensorManager.registerListener(shakeListener, sensor,	SensorManager.SENSOR_DELAY_UI);
     }
 
     @Override
     public void onPause() {
         // Add the following line to unregister the Sensor Manager onPause
-        mSensorManager.unregisterListener(mShakeDetector);
+        sensorManager.unregisterListener(shakeListener);
         super.onPause();
     }
 
