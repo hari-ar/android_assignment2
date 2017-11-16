@@ -7,6 +7,7 @@ import android.graphics.Paint;
  */
 
 public class CellObject {
+    //Contains all cell attributes.. A 10 x 10 array of this Stores the whole game data.
 
     private boolean isFlagged,isMine = false;
     private boolean isCovered = true;

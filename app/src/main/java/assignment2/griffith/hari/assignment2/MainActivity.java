@@ -123,15 +123,17 @@ public class MainActivity extends AppCompatActivity {
         if (cellObjectTable[row][col].isMine()) { //If mine, return -1, can be anything negative..!!
             return -1;
         }
-        for (int i = -1; i < 2; i++) //Horizontal Neighbours
+        for (int rowIndex = -1; rowIndex < 2; rowIndex++) //Horizontal Neighbours
         {
-            for (int j = -1; j < 2; j++) //Vertical Neighbors
+            for (int columnIndex = -1; columnIndex < 2; columnIndex++) //Vertical Neighbors
             {
-                if (row + i < 0 || row + i >= 10 || col + j < 0 || col + j >= 10) // Checking corner case for IndexOutOfBounds
+                //Useful in case of corners and edges where index out of bounds is possible..!
+                if (row + rowIndex < 0 || row + rowIndex >= 10 || col + columnIndex < 0 || col + columnIndex >= 10) // Checking corner case for IndexOutOfBounds
                 {
                     continue;
                 }
-                if (cellObjectTable[row + i][col + j].isMine()) {
+                //Check for mine and increase count.
+                if (cellObjectTable[row + rowIndex][col + columnIndex].isMine()) {
                     mineCount++; // MineCount increment
                 }
             }

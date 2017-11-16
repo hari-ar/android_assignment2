@@ -20,7 +20,7 @@ public class MinesweeperView extends View {
     private IOnMineCountChangeEventListener iOnMineCountChangeEventListener;
     private int minesMarkedCount, unCoveredCount = 0;
     private float multiplier;
-    private final float paddingConstant = 2f;
+    private final float paddingConstant = 2f; // This is required to show background white color
     CellObject[][] cellObjectTable;
     private boolean uncoverModeSet = true; // Default to uncover Mode
     private boolean gameOverFlag = false;
@@ -47,7 +47,8 @@ public class MinesweeperView extends View {
 
 
     //Common Init Method..!!
-    private void init() { //Common init method.
+    private void init() {
+        //Common init method.
         //Initialize Paints
         black = new Paint();
         white = new Paint();
@@ -99,8 +100,6 @@ public class MinesweeperView extends View {
             }
         }
     }
-
-
     private void drawInitialSquares() {
         for (int index = 0; index <= 10; index++) {
             canvas.drawLine(paddingConstant, index * multiplier, 10 * multiplier, index * multiplier, white); // Horizontal Lines
@@ -113,42 +112,36 @@ public class MinesweeperView extends View {
                 else
                     canvas.drawRect(row * multiplier + paddingConstant, col * multiplier + paddingConstant, (row + 1) * multiplier - paddingConstant, (col + 1) * multiplier - paddingConstant, yellow); // Yellow Rectangles for flagged
             }
-
         }
     }
-
     private void drawTextSquares() {
         for (int row = 0; row < cellObjectTable.length; row++) { //Iterate through rows
             for (int col = 0; col < cellObjectTable[row].length; col++) { // Iterate Columns
                 if (!cellObjectTable[row][col].isCovered())//Check if cell is uncovered...
                 {
                     if (!(cellObjectTable[row][col].isFlagged()) || (cellObjectTable[row][col].isCovered())) { //Cell shouldn't be flagged or uncovered
-                        drawMineText(row, col); //Print the data
+                        drawTextInsideTheCell(row, col); //Print the data
                     }
                 }
             }
         }
     }
-
-    private void drawMineText(int row, int col) { // Used to draw Text
+    private void drawTextInsideTheCell(int row, int col) {
+        // Used to draw Text
         //Calculate dimensions to draw Text, best way is to use Rect
         float left =  (row * multiplier) + paddingConstant;
         float top = (col * multiplier) + paddingConstant;
         float right =  ((row + 1) * multiplier) - paddingConstant;
         float bottom =  ((col + 1) * multiplier) - paddingConstant;
         canvas.drawRect(left, top, right, bottom, cellObjectTable[row][col].getCellBackground()); //Draw backgroud rectangle to fill cell background
-        Paint textPaint = cellObjectTable[row][col].getCellTextColor(); //Set text color
-        String input = cellObjectTable[row][col].getMineString(); //Set input text to be printed
+        Paint textPaint = cellObjectTable[row][col].getCellTextColor(); //Getting text color and setting it to paint
+        String input = cellObjectTable[row][col].getMineString(); //Getting input text to be printed
         float textWidth = textPaint.measureText(input, 0, 1); //Get Text Width, to calcuate center or where actually text printing starts
         float textBottom = textPaint.descent() - textPaint.ascent(); // Get the distance to calculate final bottom value of text.. It just works.. :P  https://stackoverflow.com/questions/4909367/how-to-align-text-vertically
         left = left + ((right - left)- textWidth) / 2; // Calulate the difference and divide by 2, since we do not need complete length but just half upto center
         top = top + ((bottom - top) - textBottom) / 2;// Similarly Calulate the difference and divide by 2, since we do not need complete length but just half upto center
         canvas.drawText(input, left, top - textPaint.ascent(), textPaint); //Finally draw the text.. Phew.. Lot of math..!!
     }
-
-
-
-
     private void unCoverAllMines() {
         for (CellObject[] rowCellObjectTable : cellObjectTable) { // Iterate through rows
             for (CellObject columnCellObjectTable : rowCellObjectTable) { // Iterate through columns
@@ -159,9 +152,6 @@ public class MinesweeperView extends View {
             }
         }
     }
-
-
-
 
 
     @Override
@@ -184,7 +174,6 @@ public class MinesweeperView extends View {
         //Get user touch input co-ordinates
 
         if(event.getActionMasked() == MotionEvent.ACTION_DOWN) { //Get touch down co-ordinates
-
             float x = event.getX();
             float y = event.getY();
             //Convert user touch co-ordinates to out cell map
@@ -222,7 +211,9 @@ public class MinesweeperView extends View {
                     {
                         if (!cellObjectTable[row][column].isMine()) { //Check if user stepped on mine..!! Oops
                             if (cellObjectTable[row][column].getMineCount() == 0) //If not mine check for count., if zero, we've to appreciate user
+                            {
                                 uncoverCells(row, column); // Appreciating by opening adjacent 0 tiles, till it reach a non zero tile
+                            }
                             else {
                                 cellObjectTable[row][column].setCovered(false); //If not mine, uncover the cell
                                 setUnCoveredCount(getUnCoveredCount() + 1); //Increase the uncovered count to track the game progress
@@ -242,6 +233,7 @@ public class MinesweeperView extends View {
     }
 
     private void uncoverCells(int row, int col) {
+        //Same loop logic as the get mine count in Main Activity.. Getting all 9 neighbor value
         for (int rowIndex = -1; rowIndex < 2; rowIndex++) //Horizontal Neighbours
         {
             for (int columnIndex = -1; columnIndex < 2; columnIndex++) //Vertical Neighbors
