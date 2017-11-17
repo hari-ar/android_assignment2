@@ -3,7 +3,6 @@ package assignment2.griffith.hari.assignment2;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.graphics.Rect;
 import android.graphics.RectF;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
@@ -20,9 +19,9 @@ public class MinesweeperView extends View {
     private Paint black, white, silver, red, yellow; //Colors for background and line colors.
 
     private IOnMineCountChangeEventListener iOnMineCountChangeEventListener;
-    private int minesMarkedCount, unCoveredCount = 0;
+    private int numberOfMarkedCells, cellsUncoveredByUser = 0;
     private float multiplier;
-    private final float paddingConstant = 2f; // This is required to show background white color
+    private final float borderOffset = 2f; // This is required to show background white color
     CellObject[][] cellObjectTable;
     private boolean uncoverModeSet = true; // Default to uncover Mode
     private boolean gameOverFlag = false;
@@ -89,16 +88,18 @@ public class MinesweeperView extends View {
             multiplier = width / 10; // Set Multiplier to adjust to make it perfect square
         }
         System.out.println("Multiplier is "+multiplier);
-        square = new RectF(paddingConstant-multiplier/2,paddingConstant-multiplier/2,multiplier/2-paddingConstant,multiplier/2-paddingConstant);
 
-        drawInitialSquares(); // Draw Background
+        //Initialize cell square.
+        square = new RectF(borderOffset -multiplier/2, borderOffset -multiplier/2,multiplier/2- borderOffset,multiplier/2- borderOffset);
+
+        drawGameBoard(); // Draw Background
         //drawTextSquares(); //This method is responsible for drawing Texts
         if(!gameOverFlag) {
-            if (getUnCoveredCount() == 40) //Half way there.. If 40 squares are opened., player is half way there..!! Check for game over flag.
+            if (getCellsUncoveredByUser() == 40) //Half way there.. If 40 squares are opened., player is half way there..!! Check for game over flag.
             {
                 Toast.makeText(getContext(), "Great..!!! You're Half way there..!! Keep rocking..", Toast.LENGTH_LONG).show();//Toast showing game ended
             }
-            if (getUnCoveredCount() == 80) //If 80 squares are opened., player wins..!!
+            if (getCellsUncoveredByUser() == 80) //If 80 squares are opened., player wins..!!
             {
                 gameOverFlag = true;
                 Toast.makeText(getContext(), "Awesome..!!! You Win.. Click on Reset to try again", Toast.LENGTH_LONG).show();//Toast showing game ended
@@ -107,40 +108,36 @@ public class MinesweeperView extends View {
             }
         }
     }
-    private void drawInitialSquares() {
+    private void drawGameBoard() {
         for (int index = 0; index <= 10; index++) {
-            canvas.drawLine(paddingConstant, index * multiplier, 10 * multiplier, index * multiplier, white); // Horizontal Lines
-            canvas.drawLine(index * multiplier, paddingConstant, index * multiplier, 10 * multiplier, white); // Vertical Lines
+            canvas.drawLine(borderOffset, index * multiplier, 10 * multiplier, index * multiplier, white); // Horizontal Lines
+            canvas.drawLine(index * multiplier, borderOffset, index * multiplier, 10 * multiplier, white); // Vertical Lines
         }
         for (int row = 0; row < cellObjectTable.length; row++) { //Iterate through rows
             for (int col = 0; col < cellObjectTable[row].length; col++) { // Iterate Columns
                 canvas.save();
+
+                //Can move this to cell object as well.. to be cleaner.
                 canvas.translate((2*row+1)*multiplier/2,(2*col+1)*multiplier/2); //Finding centers of squares to move the origin.
 
-                if (!cellObjectTable[row][col].isFlagged())
+                if (!cellObjectTable[row][col].isFlagged()) //Not draw if flagged
                 {
-                    if(cellObjectTable[row][col].isCovered())
+                    if(cellObjectTable[row][col].isCovered()) //Draw black rectangle for covered cells.
                     {
                         canvas.drawRect(square, black); //Render Rectangles
                     }
-                    else{
-                        canvas.drawRect(square,cellObjectTable[row][col].getCellBackground());
+                    else{ //To draw text
+                        canvas.drawRect(square,cellObjectTable[row][col].getCellBackground()); //Get Cell Background color
                         Paint textPaint = cellObjectTable[row][col].getCellTextColor(); //Getting text color and setting it to paint
-                        textPaint.setTextSize(multiplier/2);
+                        textPaint.setTextSize(multiplier/2); //Set text size, which modifies based on device
                         String input = cellObjectTable[row][col].getMineString(); //Getting input text to be printed
-                        //RectF areaRect = new RectF(0-multiplier/3, 0-multiplier/3,multiplier/3,multiplier/2);
-                        RectF bounds = new RectF(square);
-                        bounds.right = textPaint.measureText(input, 0, 1);
-                        bounds.bottom = textPaint.descent() - textPaint.ascent();
-                        bounds.left += (square.width() - bounds.right) / 2.0f;
-                        bounds.top += (square.height() - bounds.bottom) / 2.0f;
-                        canvas.drawText(input, bounds.left + multiplier/8, bounds.top - textPaint.ascent(), textPaint);
+                        canvas.drawText(input, 0, multiplier/4, textPaint); //Adjust text to be in center., only vertically is needed because we use align center in main activity
                         //drawTextInsideTheCell(row, col); //Print the data
                     }
                 }
                 else
                 {
-                    canvas.drawRect(square, yellow); //Render Rectangles
+                    canvas.drawRect(square, yellow); //Render Yellow Rectangles for marked squares
                 }
                 canvas.restore();
             }
@@ -149,11 +146,11 @@ public class MinesweeperView extends View {
 
     
     private void unCoverAllMines() {
-        for (CellObject[] rowCellObjectTable : cellObjectTable) { // Iterate through rows
-            for (CellObject columnCellObjectTable : rowCellObjectTable) { // Iterate through columns
-                if (columnCellObjectTable.isMine()) {
-                    columnCellObjectTable.setFlagged(false); //Unflag all mines to enable it to be displayed
-                    columnCellObjectTable.setCovered(false); // Uncover all mines to enable it to be displayed
+        for (CellObject[] rowsOfTable : cellObjectTable) { // Iterate through rows
+            for (CellObject cell : rowsOfTable) { // Iterate through columns
+                if (cell.isMine()) {
+                    cell.setFlagged(false); //Unflag all mines to enable it to be displayed
+                    cell.setCovered(false); // Uncover all mines to enable it to be displayed
                 }
             }
         }
@@ -207,10 +204,10 @@ public class MinesweeperView extends View {
                     if (cellObjectTable[row][column].isCovered()) { //Checking if cell is covered
                         if (cellObjectTable[row][column].isFlagged()) { //Checking if cell is flagged, unflag if flagged and vice versa
                             cellObjectTable[row][column].setFlagged(false); //Unset Flag and reduce Marked count
-                            setMinesMarkedCount(getMinesMarkedCount() - 1); //Reduce marked count
+                            setNumberOfMarkedCells(getNumberOfMarkedCells() - 1); //Reduce marked count
                         } else { //This will be called in marking mode if flag was not set already
                             cellObjectTable[row][column].setFlagged(true); //Set Flag
-                            setMinesMarkedCount(getMinesMarkedCount() + 1); //Increase marking count
+                            setNumberOfMarkedCells(getNumberOfMarkedCells() + 1); //Increase marking count
                         }
                     }
                 } else { // Uncover Mode
@@ -219,11 +216,11 @@ public class MinesweeperView extends View {
                         if (!cellObjectTable[row][column].isMine()) { //Check if user stepped on mine..!! Oops
                             if (cellObjectTable[row][column].getMineCount() == 0) //If not mine check for count., if zero, we've to appreciate user
                             {
-                                uncoverCells(row, column); // Appreciating by opening adjacent 0 tiles, till it reach a non zero tile
+                                uncoverZerosAndCascadeCells(row, column); // Appreciating by opening adjacent 0 tiles, till it reach a non zero tile
                             }
                             else {
                                 cellObjectTable[row][column].setCovered(false); //If not mine, uncover the cell
-                                setUnCoveredCount(getUnCoveredCount() + 1); //Increase the uncovered count to track the game progress
+                                setCellsUncoveredByUser(getCellsUncoveredByUser() + 1); //Increase the uncovered count to track the game progress
                             }
                         } else { //If User Clicked on Mine
                             setGameOverFlag(true);//Sets game is over..!!
@@ -239,7 +236,8 @@ public class MinesweeperView extends View {
         return super.onTouchEvent(event);
     }
 
-    private void uncoverCells(int row, int col) {
+    //Using DFS to uncover 0's
+    private void uncoverZerosAndCascadeCells(int row, int col) {
         //Same loop logic as the get mine count in Main Activity.. Getting all 9 neighbor value
         for (int rowIndex = -1; rowIndex < 2; rowIndex++) //Horizontal Neighbours
         {
@@ -253,12 +251,12 @@ public class MinesweeperView extends View {
 
                     if (cellObjectTable[row + rowIndex][col + columnIndex].isFlagged()) { //Remove flagged cells and reduce flag count
                         cellObjectTable[row + rowIndex][col + columnIndex].setFlagged(false);
-                        minesMarkedCount--;
+                        numberOfMarkedCells--;
                     }
                     cellObjectTable[row + rowIndex][col + columnIndex].setCovered(false); //Uncover mine
-                    setUnCoveredCount(getUnCoveredCount() + 1); // Increase uncovered count.. Must not miss track of this
+                    setCellsUncoveredByUser(getCellsUncoveredByUser() + 1); // Increase uncovered count.. Must not miss track of this
                     if (cellObjectTable[row + rowIndex][col + columnIndex].getMineCount() == 0) { //Check if neighbor cell also have zero
-                        uncoverCells(row + rowIndex, col + columnIndex); // Recursion.. Helps here..!! Man.. I used to hate this..
+                        uncoverZerosAndCascadeCells(row + rowIndex, col + columnIndex); // Opening cells by DFS..
                     }
                 }
             }
@@ -266,12 +264,12 @@ public class MinesweeperView extends View {
     }
 
     // Getters and Setters Start.....!!
-    public int getUnCoveredCount() {
-        return unCoveredCount;
+    public int getCellsUncoveredByUser() {
+        return cellsUncoveredByUser;
     }
 
-    public void setUnCoveredCount(int unCoveredCount) {
-        this.unCoveredCount = unCoveredCount;
+    public void setCellsUncoveredByUser(int cellsUncoveredByUser) {
+        this.cellsUncoveredByUser = cellsUncoveredByUser;
     }
 
     public boolean isGameOverFlag() {
@@ -290,14 +288,14 @@ public class MinesweeperView extends View {
         this.uncoverModeSet = uncoverModeSet;
     }
 
-    public int getMinesMarkedCount() {
-        return minesMarkedCount;
+    public int getNumberOfMarkedCells() {
+        return numberOfMarkedCells;
     }
 
-    public void setMinesMarkedCount(int minesMarkedCount) {
+    public void setNumberOfMarkedCells(int numberOfMarkedCells) {
         IOnMineCountChangeEventListener iOnMineCountChangeEventListener = this.iOnMineCountChangeEventListener;
-        this.minesMarkedCount = minesMarkedCount;
-        iOnMineCountChangeEventListener.onMinesMarkedCountChange(minesMarkedCount); //Call this to notify user of a change..!!!
+        this.numberOfMarkedCells = numberOfMarkedCells;
+        iOnMineCountChangeEventListener.onMinesMarkedCountChange(numberOfMarkedCells); //Call this to notify user of a change..!!!
     }
 
     public void setCellObjectTable(CellObject[][] cellObjectTable) {
