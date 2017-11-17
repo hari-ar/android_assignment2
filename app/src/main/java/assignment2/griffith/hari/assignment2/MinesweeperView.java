@@ -128,14 +128,13 @@ public class MinesweeperView extends View {
                         Paint textPaint = cellObjectTable[row][col].getCellTextColor(); //Getting text color and setting it to paint
                         textPaint.setTextSize(multiplier/2);
                         String input = cellObjectTable[row][col].getMineString(); //Getting input text to be printed
-                        float textWidth = textPaint.measureText(input, 0, 1); //Get Text Width, to calcuate center or where actually text printing starts
-                        float textBottom = textPaint.descent() - textPaint.ascent(); // Get the distance to calculate final bottom value of text.. It just works.. :P  https://stackoverflow.com/questions/4909367/how-to-align-text-vertically
-                        float left = square.left + ((square.right - square.left)- textWidth) / 2; // Calulate the difference and divide by 2, since we do not need complete length but just half upto center
-                        float top = square.top + ((square.bottom - square.top) - textBottom) / 2;// Similarly Calulate the difference and divide by 2, since we do not need complete length but just half upto center
-                        canvas.save();
-                        canvas.translate(left,top-textPaint.ascent());
-                        canvas.drawText(input, 0, 0 , textPaint); //Finally draw the text.. Phew.. Lot of math..!!
-                        canvas.restore();
+                        //RectF areaRect = new RectF(0-multiplier/3, 0-multiplier/3,multiplier/3,multiplier/2);
+                        RectF bounds = new RectF(square);
+                        bounds.right = textPaint.measureText(input, 0, 1);
+                        bounds.bottom = textPaint.descent() - textPaint.ascent();
+                        bounds.left += (square.width() - bounds.right) / 2.0f;
+                        bounds.top += (square.height() - bounds.bottom) / 2.0f;
+                        canvas.drawText(input, bounds.left + multiplier/8, bounds.top - textPaint.ascent(), textPaint);
                         //drawTextInsideTheCell(row, col); //Print the data
                     }
                 }
