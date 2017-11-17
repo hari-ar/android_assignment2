@@ -3,6 +3,8 @@ package assignment2.griffith.hari.assignment2;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Rect;
+import android.graphics.RectF;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
@@ -25,6 +27,7 @@ public class MinesweeperView extends View {
     private boolean uncoverModeSet = true; // Default to uncover Mode
     private boolean gameOverFlag = false;
     private Canvas canvas;
+    private RectF square;
     int rowDown =-1, columnDown =-1, rowUp =-1,columnUp =-1;
 
 
@@ -76,6 +79,7 @@ public class MinesweeperView extends View {
     protected void onDraw(Canvas canvas) { //Called on invalidate()
         super.onDraw(canvas); //Calling super..!!
         this.canvas = canvas;
+
         float width = getMeasuredWidth(); //Get Width
         float height = getMeasuredHeight(); //Get Height
         if (height < width) //Checking least values of height and weight
@@ -84,8 +88,11 @@ public class MinesweeperView extends View {
         } else {
             multiplier = width / 10; // Set Multiplier to adjust to make it perfect square
         }
+        System.out.println("Multiplier is "+multiplier);
+        square = new RectF(paddingConstant-multiplier/2,paddingConstant-multiplier/2,multiplier/2-paddingConstant,multiplier/2-paddingConstant);
+
         drawInitialSquares(); // Draw Background
-        drawTextSquares(); //This method is responsible for drawing Texts
+        //drawTextSquares(); //This method is responsible for drawing Texts
         if(!gameOverFlag) {
             if (getUnCoveredCount() == 40) //Half way there.. If 40 squares are opened., player is half way there..!! Check for game over flag.
             {
@@ -107,41 +114,41 @@ public class MinesweeperView extends View {
         }
         for (int row = 0; row < cellObjectTable.length; row++) { //Iterate through rows
             for (int col = 0; col < cellObjectTable[row].length; col++) { // Iterate Columns
+                canvas.save();
+                canvas.translate((2*row+1)*multiplier/2,(2*col+1)*multiplier/2); //Finding centers of squares to move the origin.
+
                 if (!cellObjectTable[row][col].isFlagged())
-                    canvas.drawRect(row * multiplier + paddingConstant, col * multiplier + paddingConstant, (row + 1) * multiplier - paddingConstant, (col + 1) * multiplier - paddingConstant, black); //Render Rectangles
-                else
-                    canvas.drawRect(row * multiplier + paddingConstant, col * multiplier + paddingConstant, (row + 1) * multiplier - paddingConstant, (col + 1) * multiplier - paddingConstant, yellow); // Yellow Rectangles for flagged
-            }
-        }
-    }
-    private void drawTextSquares() {
-        for (int row = 0; row < cellObjectTable.length; row++) { //Iterate through rows
-            for (int col = 0; col < cellObjectTable[row].length; col++) { // Iterate Columns
-                if (!cellObjectTable[row][col].isCovered())//Check if cell is uncovered...
                 {
-                    if (!(cellObjectTable[row][col].isFlagged()) || (cellObjectTable[row][col].isCovered())) { //Cell shouldn't be flagged or uncovered
-                        drawTextInsideTheCell(row, col); //Print the data
+                    if(cellObjectTable[row][col].isCovered())
+                    {
+                        canvas.drawRect(square, black); //Render Rectangles
+                    }
+                    else{
+                        canvas.drawRect(square,cellObjectTable[row][col].getCellBackground());
+                        Paint textPaint = cellObjectTable[row][col].getCellTextColor(); //Getting text color and setting it to paint
+                        textPaint.setTextSize(multiplier/2);
+                        String input = cellObjectTable[row][col].getMineString(); //Getting input text to be printed
+                        float textWidth = textPaint.measureText(input, 0, 1); //Get Text Width, to calcuate center or where actually text printing starts
+                        float textBottom = textPaint.descent() - textPaint.ascent(); // Get the distance to calculate final bottom value of text.. It just works.. :P  https://stackoverflow.com/questions/4909367/how-to-align-text-vertically
+                        float left = square.left + ((square.right - square.left)- textWidth) / 2; // Calulate the difference and divide by 2, since we do not need complete length but just half upto center
+                        float top = square.top + ((square.bottom - square.top) - textBottom) / 2;// Similarly Calulate the difference and divide by 2, since we do not need complete length but just half upto center
+                        canvas.save();
+                        canvas.translate(left,top-textPaint.ascent());
+                        canvas.drawText(input, 0, 0 , textPaint); //Finally draw the text.. Phew.. Lot of math..!!
+                        canvas.restore();
+                        //drawTextInsideTheCell(row, col); //Print the data
                     }
                 }
+                else
+                {
+                    canvas.drawRect(square, yellow); //Render Rectangles
+                }
+                canvas.restore();
             }
         }
     }
-    private void drawTextInsideTheCell(int row, int col) {
-        // Used to draw Text
-        //Calculate dimensions to draw Text, best way is to use Rect
-        float left =  (row * multiplier) + paddingConstant;
-        float top = (col * multiplier) + paddingConstant;
-        float right =  ((row + 1) * multiplier) - paddingConstant;
-        float bottom =  ((col + 1) * multiplier) - paddingConstant;
-        canvas.drawRect(left, top, right, bottom, cellObjectTable[row][col].getCellBackground()); //Draw backgroud rectangle to fill cell background
-        Paint textPaint = cellObjectTable[row][col].getCellTextColor(); //Getting text color and setting it to paint
-        String input = cellObjectTable[row][col].getMineString(); //Getting input text to be printed
-        float textWidth = textPaint.measureText(input, 0, 1); //Get Text Width, to calcuate center or where actually text printing starts
-        float textBottom = textPaint.descent() - textPaint.ascent(); // Get the distance to calculate final bottom value of text.. It just works.. :P  https://stackoverflow.com/questions/4909367/how-to-align-text-vertically
-        left = left + ((right - left)- textWidth) / 2; // Calulate the difference and divide by 2, since we do not need complete length but just half upto center
-        top = top + ((bottom - top) - textBottom) / 2;// Similarly Calulate the difference and divide by 2, since we do not need complete length but just half upto center
-        canvas.drawText(input, left, top - textPaint.ascent(), textPaint); //Finally draw the text.. Phew.. Lot of math..!!
-    }
+
+    
     private void unCoverAllMines() {
         for (CellObject[] rowCellObjectTable : cellObjectTable) { // Iterate through rows
             for (CellObject columnCellObjectTable : rowCellObjectTable) { // Iterate through columns
@@ -176,6 +183,7 @@ public class MinesweeperView extends View {
         if(event.getActionMasked() == MotionEvent.ACTION_DOWN) { //Get touch down co-ordinates
             float x = event.getX();
             float y = event.getY();
+            System.out.println("x is "+x+" and y is "+y);
             //Convert user touch co-ordinates to out cell map
              rowDown = (int) (x / multiplier);
             columnDown = (int) (y / multiplier);

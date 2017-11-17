@@ -108,7 +108,9 @@ public class MainActivity extends AppCompatActivity {
             if (index > 4) {
                 textPaints[index].setColor(getResources().getColor(R.color.red));// Setting red as color for 4 or more bombs.
             }
-            textPaints[index].setTextSize(50); // Setting text size as 50
+            //textPaints[index].setTextSize(getApplicationContext().getResources().getDimensionPixelSize(R.dimen.text_size)); // Setting text size as 50
+            //textPaints[index].setTextSize(80);
+            textPaints[index].setTextAlign(Paint.Align.CENTER);
         }
         textPaints[0].setColor(getResources().getColor(R.color.black)); //Makes M color as Black
         textPaints[1].setColor(getResources().getColor(R.color.silver)); //Makes 0 invisible., A crazy hack avoid tons of if conditions..!!
