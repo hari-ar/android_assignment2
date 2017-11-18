@@ -16,7 +16,7 @@ import android.widget.Toast;
 
 public class MinesweeperView extends View {
 
-    private Paint black, white, silver, red, yellow; //Colors for background and line colors.
+    private Paint black, white, yellow; //Colors for background and line colors.
 
     private IOnMineCountChangeEventListener iOnMineCountChangeEventListener;
     private int numberOfMarkedCells, cellsUncoveredByUser = 0;
@@ -54,22 +54,14 @@ public class MinesweeperView extends View {
         //Initialize Paints
         black = new Paint();
         white = new Paint();
-        silver = new Paint();
-        red = new Paint();
         yellow = new Paint();
         //Setting respective Colors
         black.setColor(getResources().getColor(R.color.black));
         white.setColor(getResources().getColor(R.color.white));
-        silver.setColor(getResources().getColor(R.color.silver));
-        red.setColor(getResources().getColor(R.color.red));
         yellow.setColor(getResources().getColor(R.color.yellow));
-        //Initialize textPaints Array --> Index indicates mineCount, each mine count is assigned a different color as per requirement
-
         //Setting Anti Aliasing Flags..!!
         white.setAntiAlias(true);
-        silver.setAntiAlias(true);
         black.setAntiAlias(true);
-        red.setAntiAlias(true);
         yellow.setAntiAlias(true);
         //Setting Anti Aliasing Flag Ends..!!
     }
@@ -90,10 +82,13 @@ public class MinesweeperView extends View {
         System.out.println("Multiplier is "+multiplier);
 
         //Initialize cell square.
-        square = new RectF(borderOffset -multiplier/2, borderOffset -multiplier/2,multiplier/2- borderOffset,multiplier/2- borderOffset);
+        if(square==null) //Avoids unnecessary initialization
+        {
+            square = new RectF(borderOffset -multiplier/2, borderOffset -multiplier/2,multiplier/2- borderOffset,multiplier/2- borderOffset);
+        }
 
         drawGameBoard(); // Draw Background
-        //drawTextSquares(); //This method is responsible for drawing Texts
+
         if(!gameOverFlag) {
             if (getCellsUncoveredByUser() == 40) //Half way there.. If 40 squares are opened., player is half way there..!! Check for game over flag.
             {
@@ -103,7 +98,6 @@ public class MinesweeperView extends View {
             {
                 gameOverFlag = true;
                 Toast.makeText(getContext(), "Awesome..!!! You Win.. Click on Reset to try again", Toast.LENGTH_LONG).show();//Toast showing game ended
-                //openAllSquares();
                 invalidate();
             }
         }

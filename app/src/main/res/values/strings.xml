@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">Assignment2</string>
     <string name="action_settings">Settings</string>
-    <string name="default_mines_marked">Marked Mines : 0</string>
+    <string name="default_mines_marked">Marked Cells: 0</string>
     <string name="default_total_mines">Total Mines : 20</string>
     <string name="reset_button_text">Reset Game</string>
     <string name="default_mode_string">Goto Marking Mode</string>

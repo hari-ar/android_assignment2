@@ -51,6 +51,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+
+        //Gravity sensor listener..
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         sensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         shakeListener = new ShakeListener();
@@ -58,8 +60,9 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onShake() {
+                //Reset game and set toast
                 Toast.makeText(MainActivity.this, "Device Shaken, Resetting the Game", Toast.LENGTH_SHORT).show();
-                reset();
+                resetGame();
             }
         });
 
@@ -175,11 +178,11 @@ public class MainActivity extends AppCompatActivity {
 
 
     public void resetGame(View view) {
-        reset();
+        resetGame();
     }
     
-    private void reset(){
-        initGameBoard(); //Must init board on every reset
+    private void resetGame(){
+        initGameBoard(); //Must init board on every resetGame
         minesweeperView.setCellObjectTable(cellObjectTable); //Set New Object
         minesweeperView.setGameOverFlag(false); // Reset game over flag
         minesweeperView.setNumberOfMarkedCells(0); // Reset mines counter
