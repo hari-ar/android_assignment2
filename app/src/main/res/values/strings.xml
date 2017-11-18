@@ -5,5 +5,5 @@
     <string name="default_total_mines">Total Mines : 20</string>
     <string name="reset_button_text">Reset Game</string>
     <string name="default_mode_string">Goto Marking Mode</string>
-    <string name="mineTextDefault">Marked Mines : </string>
+    <string name="mineTextDefault">Marked Cells: </string>
 </resources>
