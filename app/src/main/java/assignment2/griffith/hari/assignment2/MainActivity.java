@@ -152,7 +152,7 @@ public class MainActivity extends AppCompatActivity {
             int col = random.nextInt(10); //Bound by 10 , max number  is 10
             if (!cellObjectTable[row][col].isMine()) {
                 cellObjectTable[row][col].setMine(true); //Power up Mines
-                cellObjectTable[row][col].setFlagged(true);//Enabled for testing
+                //cellObjectTable[row][col].setFlagged(true);//Enabled for testing
                 //System.out.println("Row is " + row + " and Col is " + col);
                 count++;
             }
